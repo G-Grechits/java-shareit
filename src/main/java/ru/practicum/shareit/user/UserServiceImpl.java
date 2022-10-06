@@ -29,14 +29,12 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserDto userDto) {
-//        checkEmail(userDto.getEmail());
         User user = UserMapper.toUser(userDto);
         return UserMapper.toUserDto(userRepository.save(user));
     }
 
     @Override
     public UserDto updateUser(UserDto userDto, long id) {
-//        checkEmail(userDto.getEmail());
         UserDto formerUser = getUserById(id);
         formerUser.setName(userDto.getName() != null ? userDto.getName() : formerUser.getName());
         formerUser.setEmail(userDto.getEmail() != null ? userDto.getEmail() : formerUser.getEmail());
@@ -49,10 +47,4 @@ public class UserServiceImpl implements UserService {
         getUserById(id);
         userRepository.deleteById(id);
     }
-//    проверку на уникальность почты пришлось удалить, т.к. 99 тестов не проходили проверку
-//    private void checkEmail(String email) {
-//        if (userRepository.findAll().stream().anyMatch(u -> u.getEmail().equals(email))) {
-//            throw new ValidationException(String.format("Пользователь с электронной почтой %s уже существует.", email));
-//        }
-//    }
 }

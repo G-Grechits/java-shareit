@@ -12,6 +12,7 @@ import ru.practicum.shareit.exception.WrongParameterException;
 import ru.practicum.shareit.item.dto.CommentDto;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.dto.ItemDtoWithInfo;
+import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserDto;
 import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.UserService;
@@ -52,8 +53,7 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public ItemDtoWithInfo getItemById(long id, long userId) {
         userService.getUserById(userId);
-        Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new ObjectNotFoundException(String.format("Вещь с ID = %d не найдена.", id)));
+        Item item = getItemFromRepositoryById(id);
         ItemDtoWithInfo itemDtoWithInfo = ItemMapper.toItemDtoWithInfo(item);
         if (item.getOwner().getId() == userId) {
             setBookingsForItem(itemDtoWithInfo);
@@ -77,8 +77,8 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public ItemDto updateItem(ItemDto itemDto, long id, long userId) {
-        getItemById(id, userId);
-        Item formerItem = itemRepository.findById(id).get();
+        userService.getUserById(userId);
+        Item formerItem = getItemFromRepositoryById(id);
         if (formerItem.getOwner().getId() != userId) {
             throw new AccessDeniedException(String.format("Пользователь с ID = %d не является владельцем вещи.", userId));
         }
@@ -103,15 +103,21 @@ public class ItemServiceImpl implements ItemService {
 
     @Override
     public CommentDto createComment(CommentDto commentDto, long itemId, long userId) {
-        getItemById(itemId, userId);
+        Item item = getItemFromRepositoryById(itemId);
+        User user = UserMapper.toUser(userService.getUserById(userId));
         if (bookingRepository.findAllByBookerIdAndItemIdAndEndBefore(userId, itemId, LocalDateTime.now()).stream()
                 .noneMatch(b -> b.getStatus().equals(Status.APPROVED))) {
             throw new WrongParameterException(String.format("Пользователь с ID = %d не арендовал данную вещь.", userId));
         }
         Comment comment = CommentMapper.toComment(commentDto);
-        comment.setItem(itemRepository.findById(itemId).get());
-        comment.setAuthor(UserMapper.toUser(userService.getUserById(userId)));
-        return CommentMapper.toCommentDto(comment);
+        comment.setItem(item);
+        comment.setAuthor(user);
+        return CommentMapper.toCommentDto(commentRepository.save(comment));
+    }
+
+    private Item getItemFromRepositoryById(long id) {
+        return itemRepository.findById(id)
+                .orElseThrow(() -> new ObjectNotFoundException(String.format("Вещь с ID = %d не найдена.", id)));
     }
 
     private void setBookingsForItem(ItemDtoWithInfo itemDtoWithInfo) {

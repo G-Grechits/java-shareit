@@ -9,7 +9,6 @@ import ru.practicum.shareit.exception.ObjectNotFoundException;
 import ru.practicum.shareit.exception.WrongParameterException;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.item.ItemRepository;
-import ru.practicum.shareit.item.ItemService;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserMapper;
 import ru.practicum.shareit.user.UserService;
@@ -24,7 +23,6 @@ public class BookingServiceImpl implements BookingService {
     private final BookingRepository bookingRepository;
     private final ItemRepository itemRepository;
     private final UserService userService;
-    private final ItemService itemService;
 
     @Override
     public List<BookingDtoWithInfo> getBookingsByUserId(long userId, String state) {
@@ -113,29 +111,34 @@ public class BookingServiceImpl implements BookingService {
         userService.getUserById(userId);
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(() -> new ObjectNotFoundException(String.format("Бронирование с ID = %d не найдено.", id)));
-        if (booking.getBooker().getId() != userId && booking.getItem().getOwner().getId() != userId) {
-            throw new AccessDeniedException(String.format(
-                    "Пользователь с ID = %d не является владельцем вещи или автором бронирования.", userId));
+        if (booking.getBooker().getId() == userId || booking.getItem().getOwner().getId() == userId) {
+            return BookingMapper.toBookingDtoWithInfo(booking);
         }
-        return BookingMapper.toBookingDtoWithInfo(booking);
+        throw new AccessDeniedException(String.format(
+                "Пользователь с ID = %d не является владельцем вещи или автором бронирования.", userId));
     }
 
     @Override
     public BookingDtoWithInfo createBooking(BookingDto bookingDto, long userId) {
-        itemService.getItemById(bookingDto.getItemId(), userId);
+        User user = UserMapper.toUser(userService.getUserById(userId));
         if (bookingDto.getEnd().isBefore(bookingDto.getStart())) {
             throw new WrongParameterException(
                     "Дата и время окончания бронирования не могут быть раньше даты и времени начала бронирования.");
         }
-        Booking booking = BookingMapper.toBookingFromDto(bookingDto);
-        Item item = itemRepository.findById(bookingDto.getItemId()).get();
-        if (!item.getAvailable()) {
+        Item item = itemRepository.findById(bookingDto.getItemId())
+                .orElseThrow(() -> new ObjectNotFoundException(String.format(
+                        "Вещь с ID = %d не найдена.", bookingDto.getItemId())));
+        if (item.getOwner().getId() == userId) {
+            throw new AccessDeniedException("Вещь не может быть забронирована её владельцем.");
+        }
+        if (!item.getAvailable() || bookingRepository.isAvailableForBooking(bookingDto.getItemId(),
+                bookingDto.getStart(), bookingDto.getEnd())) {
             throw new WrongParameterException(String.format(
                     "Вещь с ID = %d не доступна для бронирования.", item.getId()));
         }
-        User user = UserMapper.toUser(userService.getUserById(userId));
-        booking.setItem(item);
+        Booking booking = BookingMapper.toBookingFromDto(bookingDto);
         booking.setBooker(user);
+        booking.setItem(item);
         return BookingMapper.toBookingDtoWithInfo(bookingRepository.save(booking));
     }
 
@@ -145,9 +148,6 @@ public class BookingServiceImpl implements BookingService {
         if (bookingDtoWithInfo.getItem().getOwner().getId() != userId) {
             throw new ObjectNotFoundException(String.format(
                     "Пользователь с ID = %d не является владельцем вещи.", userId));
-        }
-        if (approved == null) {
-            throw new WrongParameterException("Не указан ответ на запрос на бронирование.");
         }
         if (bookingDtoWithInfo.getStatus().equals(Status.APPROVED)) {
             throw new WrongParameterException("Бронирование не может быть подтверждено дважды.");
