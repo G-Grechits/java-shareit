@@ -1,26 +1,23 @@
 package ru.practicum.shareit.item;
 
-import ru.practicum.shareit.user.User;
+import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoWithInfo;
+
+import java.util.ArrayList;
 
 public class ItemMapper {
 
-    public static ItemDto toItemDto(Item item) {
-        return ItemDto.builder()
-                .id(item.getId())
-                .name(item.getName())
-                .description(item.getDescription())
-                .available(item.getAvailable())
-                .ownerId(item.getOwner() != null ? item.getOwner().getId() : null)
-                .build();
+    public static Item toItemFromDto(ItemDto itemDto) {
+        return new Item(itemDto.getId(), itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable(),
+                null);
     }
 
-    public static Item toItem(ItemDto itemDto, User owner) {
-        return Item.builder()
-                .id(itemDto.getId())
-                .name(itemDto.getName())
-                .description(itemDto.getDescription())
-                .available(itemDto.getAvailable())
-                .owner(owner)
-                .build();
+    public static ItemDto toItemDto(Item item) {
+        return new ItemDto(item.getId(), item.getName(), item.getDescription(), item.getAvailable());
+    }
+
+    public static ItemDtoWithInfo toItemDtoWithInfo(Item item) {
+        return new ItemDtoWithInfo(item.getId(), item.getName(), item.getDescription(), item.getAvailable(),
+                null, null, new ArrayList<>());
     }
 }

@@ -25,6 +25,12 @@ public class ErrorHandler {
     }
 
     @ExceptionHandler
+    public ResponseEntity<String> handleWrongParameterException(final WrongParameterException e) {
+        log.info("Возникла ошибка 400: {}", e.getMessage());
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
     public ResponseEntity<String> handleAccessDeniedException(final AccessDeniedException e) {
         log.info("Возникла ошибка 403: {}", e.getMessage());
         return new ResponseEntity<>(e.getMessage(), HttpStatus.FORBIDDEN);
