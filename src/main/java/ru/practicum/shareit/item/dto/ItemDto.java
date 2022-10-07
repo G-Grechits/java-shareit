@@ -1,6 +1,6 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.dto;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import ru.practicum.shareit.marker.Create;
 
@@ -8,7 +8,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@Builder
+@AllArgsConstructor
 public class ItemDto {
     private Long id;
     @NotBlank(groups = {Create.class}, message = "Не указано название вещи.")
@@ -17,5 +17,4 @@ public class ItemDto {
     private String description;
     @NotNull(groups = {Create.class}, message = "Не указано, доступна ли вещь для аренды.")
     private Boolean available;
-    private Long ownerId;
 }

@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.ItemDtoWithInfo;
 import ru.practicum.shareit.marker.Create;
 import ru.practicum.shareit.marker.Update;
 
@@ -17,17 +20,17 @@ public class ItemController {
     private final ItemService itemService;
 
     @GetMapping
-    public List<ItemDto> getItemsByUserId(@RequestHeader("X-Sharer-User-Id") long userId) {
-        List<ItemDto> items = itemService.getItemsByUserId(userId);
+    public List<ItemDtoWithInfo> getItemsByUserId(@RequestHeader("X-Sharer-User-Id") long userId) {
+        List<ItemDtoWithInfo> items = itemService.getItemsByUserId(userId);
         log.info("Получен список всех вещей пользователя.");
         return items;
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getItemById(@PathVariable long itemId) {
-        ItemDto itemDto = itemService.getItemById(itemId);
-        log.info("Получена вещь {}.", itemDto.getName());
-        return itemDto;
+    public ItemDtoWithInfo getItemById(@PathVariable long itemId, @RequestHeader("X-Sharer-User-Id") long userId) {
+        ItemDtoWithInfo item = itemService.getItemById(itemId, userId);
+        log.info("Получена вещь {}.", item.getName());
+        return item;
     }
 
     @PostMapping
@@ -51,5 +54,13 @@ public class ItemController {
         List<ItemDto> items = itemService.searchItemsByText(text);
         log.info("Получен список всех вещей, содержащих текст '{}'.", text);
         return items;
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto createComment(@PathVariable long itemId, @RequestHeader("X-Sharer-User-Id") long userId,
+                                    @Validated({Create.class}) @RequestBody CommentDto commentDto) {
+        CommentDto createdComment = itemService.createComment(commentDto, itemId, userId);
+        log.info("Добавлен комментарий '{}'.", createdComment.getText());
+        return createdComment;
     }
 }

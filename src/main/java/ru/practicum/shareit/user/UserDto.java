@@ -1,6 +1,6 @@
 package ru.practicum.shareit.user;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import ru.practicum.shareit.marker.Create;
 
@@ -9,7 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 @Data
-@Builder
+@AllArgsConstructor
 public class UserDto {
     private Long id;
     @NotBlank(groups = {Create.class}, message = "Не указано имя пользователя.")
