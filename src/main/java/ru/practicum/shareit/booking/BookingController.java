@@ -8,10 +8,13 @@ import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoWithInfo;
 import ru.practicum.shareit.marker.Create;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
 @Slf4j
+@Validated
 @RequiredArgsConstructor
 @RequestMapping(path = "/bookings")
 public class BookingController {
@@ -19,16 +22,20 @@ public class BookingController {
 
     @GetMapping
     public List<BookingDtoWithInfo> getBookingsByUserId(@RequestHeader("X-Sharer-User-Id") long userId,
-                                                        @RequestParam(defaultValue = "ALL") String state) {
-        List<BookingDtoWithInfo> bookings = bookingService.getBookingsByUserId(userId, state);
+                                                        @RequestParam(defaultValue = "ALL") String state,
+                                                        @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                        @Positive @RequestParam(defaultValue = "20") int size) {
+        List<BookingDtoWithInfo> bookings = bookingService.getBookingsByUserId(userId, state, from, size);
         log.info("Получен список всех бронирований пользователя с ID = {}.", userId);
         return bookings;
     }
 
     @GetMapping("/owner")
     public List<BookingDtoWithInfo> getBookingsByItemOwnerId(@RequestHeader("X-Sharer-User-Id") long userId,
-                                                             @RequestParam(defaultValue = "ALL") String state) {
-        List<BookingDtoWithInfo> bookings = bookingService.getBookingsByItemOwnerId(userId, state);
+                                                             @RequestParam(defaultValue = "ALL") String state,
+                                                             @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                             @Positive @RequestParam(defaultValue = "20") int size) {
+        List<BookingDtoWithInfo> bookings = bookingService.getBookingsByItemOwnerId(userId, state, from, size);
         log.info("Получен список бронирований всех вещей пользователя с ID = {}.", userId);
         return bookings;
     }

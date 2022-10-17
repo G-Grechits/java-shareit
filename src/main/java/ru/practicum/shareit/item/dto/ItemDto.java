@@ -17,4 +17,5 @@ public class ItemDto {
     private String description;
     @NotNull(groups = {Create.class}, message = "Не указано, доступна ли вещь для аренды.")
     private Boolean available;
+    private Long requestId;
 }

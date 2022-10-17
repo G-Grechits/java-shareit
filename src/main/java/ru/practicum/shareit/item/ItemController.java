@@ -10,18 +10,23 @@ import ru.practicum.shareit.item.dto.ItemDtoWithInfo;
 import ru.practicum.shareit.marker.Create;
 import ru.practicum.shareit.marker.Update;
 
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.List;
 
 @RestController
 @Slf4j
+@Validated
 @RequiredArgsConstructor
 @RequestMapping("/items")
 public class ItemController {
     private final ItemService itemService;
 
     @GetMapping
-    public List<ItemDtoWithInfo> getItemsByUserId(@RequestHeader("X-Sharer-User-Id") long userId) {
-        List<ItemDtoWithInfo> items = itemService.getItemsByUserId(userId);
+    public List<ItemDtoWithInfo> getItemsByUserId(@RequestHeader("X-Sharer-User-Id") long userId,
+                                                  @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                                  @Positive @RequestParam(defaultValue = "20") int size) {
+        List<ItemDtoWithInfo> items = itemService.getItemsByUserId(userId, from, size);
         log.info("Получен список всех вещей пользователя.");
         return items;
     }
@@ -50,8 +55,10 @@ public class ItemController {
     }
 
     @GetMapping("/search")
-    public List<ItemDto> searchItemsByText(@RequestParam(required = false) String text) {
-        List<ItemDto> items = itemService.searchItemsByText(text);
+    public List<ItemDto> searchItemsByText(@RequestParam(required = false) String text,
+                                           @PositiveOrZero @RequestParam(defaultValue = "0") int from,
+                                           @Positive @RequestParam(defaultValue = "20") int size) {
+        List<ItemDto> items = itemService.searchItemsByText(text, from, size);
         log.info("Получен список всех вещей, содержащих текст '{}'.", text);
         return items;
     }
