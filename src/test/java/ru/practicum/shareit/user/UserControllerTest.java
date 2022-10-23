@@ -23,9 +23,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class UserControllerTest {
     @MockBean
     private UserService userService;
-    private final ObjectMapper mapper = new ObjectMapper();
     @Autowired
     private MockMvc mockMvc;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
     void getAllUsers() throws Exception {
@@ -34,6 +34,7 @@ class UserControllerTest {
         users.add(getUserDto());
         when(userService.getAllUsers())
                 .thenReturn(users);
+
         mockMvc.perform(get("/users"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("[{\"id\": 1,\"name\": \"test user\",\"email\": \"testuser@mail.com\"}," +
@@ -44,20 +45,23 @@ class UserControllerTest {
     @Test
     void getUserById() throws Exception {
         UserDto userDto = getUserDto();
-        when(userService.getUserById(1))
+        when(userService.getUserById(userDto.getId()))
                 .thenReturn(userDto);
+
         mockMvc.perform(get("/users/1"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"id\": 1,\"name\": \"test user\",\"email\": \"testuser@mail.com\"}"));
-        verify(userService, times(1)).getUserById(1);
+        verify(userService, times(1)).getUserById(userDto.getId());
     }
 
     @Test
     void createUser() throws Exception {
         UserDto userDto = getUserDto();
-        when(userService.createUser(any(UserDto.class)))
+        when(userService.createUser(userDto))
                 .thenReturn(userDto);
-        mockMvc.perform(post("/users").content(mapper.writeValueAsString(userDto))
+
+        mockMvc.perform(post("/users")
+                        .content(mapper.writeValueAsString(userDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
@@ -68,19 +72,20 @@ class UserControllerTest {
 
     @Test
     void updateUser() throws Exception {
-        UserDto userDto1 = getUserDto();
-        UserDto userDto2 = getUserDto();
-        userDto2.setName("test user2");
-        userDto2.setEmail("testuser2@mail.com");
-        when(userService.updateUser(userDto2, 1))
-                .thenReturn(userDto2);
-        mockMvc.perform(patch("/users/1").content(mapper.writeValueAsString(userDto2))
+        UserDto userDto = getUserDto();
+        userDto.setName("test user2");
+        userDto.setEmail("testuser2@mail.com");
+        when(userService.updateUser(userDto, userDto.getId()))
+                .thenReturn(userDto);
+
+        mockMvc.perform(patch("/users/1")
+                        .content(mapper.writeValueAsString(userDto))
                         .characterEncoding(StandardCharsets.UTF_8)
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"id\": 1,\"name\": \"test user2\",\"email\": \"testuser2@mail.com\"}"));
-        verify(userService, times(1)).updateUser(userDto2, 1);
+        verify(userService, times(1)).updateUser(userDto, userDto.getId());
     }
 
     @Test
