@@ -7,13 +7,14 @@ import java.util.ArrayList;
 
 public class ItemMapper {
 
-    public static Item toItemFromDto(ItemDto itemDto) {
+    public static Item toItem(ItemDto itemDto) {
         return new Item(itemDto.getId(), itemDto.getName(), itemDto.getDescription(), itemDto.getAvailable(),
-                null);
+                null, null);
     }
 
     public static ItemDto toItemDto(Item item) {
-        return new ItemDto(item.getId(), item.getName(), item.getDescription(), item.getAvailable());
+        return new ItemDto(item.getId(), item.getName(), item.getDescription(), item.getAvailable(),
+                item.getRequest() != null ? item.getRequest().getId() : null);
     }
 
     public static ItemDtoWithInfo toItemDtoWithInfo(Item item) {

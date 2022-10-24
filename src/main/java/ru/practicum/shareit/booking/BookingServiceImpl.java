@@ -1,6 +1,9 @@
 package ru.practicum.shareit.booking;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.booking.dto.BookingDto;
 import ru.practicum.shareit.booking.dto.BookingDtoWithInfo;
@@ -25,32 +28,34 @@ public class BookingServiceImpl implements BookingService {
     private final UserService userService;
 
     @Override
-    public List<BookingDtoWithInfo> getBookingsByUserId(long userId, String state) {
+    public List<BookingDtoWithInfo> getBookingsByUserId(long userId, String state, int from, int size) {
         userService.getUserById(userId);
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by("start").descending());
         try {
             switch (State.valueOf(state)) {
                 case ALL:
-                    return bookingRepository.findAllByBookerIdOrderByStartDesc(userId).stream()
+                    return bookingRepository.findAllByBookerId(userId, pageable).stream()
                             .map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case PAST:
-                    return bookingRepository.findAllByBookerIdAndEndBeforeOrderByStartDesc(userId, LocalDateTime.now())
+                    return bookingRepository.findAllByBookerIdAndEndBefore(userId, LocalDateTime.now(), pageable)
                             .stream().map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case CURRENT:
-                    return bookingRepository.findAllByBookerIdAndTimeBetweenOrderByStartDesc(userId, LocalDateTime.now())
-                            .stream().map(BookingMapper::toBookingDtoWithInfo)
+                    return bookingRepository.findAllByBookerIdAndStartBeforeAndEndAfter(userId, LocalDateTime.now(),
+                                    LocalDateTime.now(), pageable).stream()
+                            .map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case FUTURE:
-                    return bookingRepository.findAllByBookerIdAndStartAfterOrderByStartDesc(userId, LocalDateTime.now())
+                    return bookingRepository.findAllByBookerIdAndStartAfter(userId, LocalDateTime.now(), pageable)
                             .stream().map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case WAITING:
-                    return bookingRepository.findAllByBookerIdAndStatusOrderByStartDesc(userId, Status.WAITING).stream()
+                    return bookingRepository.findAllByBookerIdAndStatus(userId, Status.WAITING, pageable).stream()
                             .map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case REJECTED:
-                    return bookingRepository.findAllByBookerIdAndStatusOrderByStartDesc(userId, Status.REJECTED).stream()
+                    return bookingRepository.findAllByBookerIdAndStatus(userId, Status.REJECTED, pageable).stream()
                             .map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 default:
@@ -62,40 +67,41 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public List<BookingDtoWithInfo> getBookingsByItemOwnerId(long itemOwnerId, String state) {
+    public List<BookingDtoWithInfo> getBookingsByItemOwnerId(long itemOwnerId, String state, int from, int size) {
         userService.getUserById(itemOwnerId);
-        List<Booking> bookings = bookingRepository.findAllByItemOwnerIdOrderByStartDesc(itemOwnerId);
+        Pageable pageable = PageRequest.of(from / size, size, Sort.by("start").descending());
+        List<Booking> bookings = bookingRepository.findAllByItemOwnerId(itemOwnerId, pageable);
         if (bookings.isEmpty()) {
-            throw new ObjectNotFoundException(String.format(
-                    "У пользователя с ID = %d нет забронированных вещей.", itemOwnerId));
+            throw new ObjectNotFoundException(
+                    String.format("У пользователя с ID = %d нет забронированных вещей.", itemOwnerId));
         }
         try {
             switch (State.valueOf(state)) {
                 case ALL:
-                    return bookingRepository.findAllByItemOwnerIdOrderByStartDesc(itemOwnerId).stream()
+                    return bookingRepository.findAllByItemOwnerId(itemOwnerId, pageable).stream()
                             .map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case PAST:
-                    return bookingRepository.findAllByItemOwnerIdAndEndBeforeOrderByStartDesc(itemOwnerId,
-                                    LocalDateTime.now()).stream()
+                    return bookingRepository.findAllByItemOwnerIdAndEndBefore(itemOwnerId, LocalDateTime.now(),
+                                    pageable).stream()
                             .map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case CURRENT:
-                    return bookingRepository.findAllByItemOwnerIdAndTimeBetweenOrderByStartDesc(itemOwnerId,
-                                    LocalDateTime.now()).stream()
+                    return bookingRepository.findAllByItemOwnerIdAndStartBeforeAndEndAfter(itemOwnerId,
+                                    LocalDateTime.now(), LocalDateTime.now(), pageable).stream()
                             .map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case FUTURE:
-                    return bookingRepository.findAllByItemOwnerIdAndStartAfterOrderByStartDesc(itemOwnerId,
-                                    LocalDateTime.now()).stream()
+                    return bookingRepository.findAllByItemOwnerIdAndStartAfter(itemOwnerId, LocalDateTime.now(),
+                                    pageable).stream()
                             .map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case WAITING:
-                    return bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(itemOwnerId, Status.WAITING)
+                    return bookingRepository.findAllByItemOwnerIdAndStatus(itemOwnerId, Status.WAITING, pageable)
                             .stream().map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 case REJECTED:
-                    return bookingRepository.findAllByItemOwnerIdAndStatusOrderByStartDesc(itemOwnerId, Status.REJECTED)
+                    return bookingRepository.findAllByItemOwnerIdAndStatus(itemOwnerId, Status.REJECTED, pageable)
                             .stream().map(BookingMapper::toBookingDtoWithInfo)
                             .collect(Collectors.toList());
                 default:
@@ -114,8 +120,8 @@ public class BookingServiceImpl implements BookingService {
         if (booking.getBooker().getId() == userId || booking.getItem().getOwner().getId() == userId) {
             return BookingMapper.toBookingDtoWithInfo(booking);
         }
-        throw new AccessDeniedException(String.format(
-                "Пользователь с ID = %d не является владельцем вещи или автором бронирования.", userId));
+        throw new AccessDeniedException(
+                String.format("Пользователь с ID = %d не является владельцем вещи или автором бронирования.", userId));
     }
 
     @Override
@@ -146,7 +152,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingDtoWithInfo approveBooking(long id, long userId, Boolean approved) {
         BookingDtoWithInfo bookingDtoWithInfo = getBookingById(id, userId);
         if (bookingDtoWithInfo.getItem().getOwner().getId() != userId) {
-            throw new ObjectNotFoundException(String.format(
+            throw new AccessDeniedException(String.format(
                     "Пользователь с ID = %d не является владельцем вещи.", userId));
         }
         if (bookingDtoWithInfo.getStatus().equals(Status.APPROVED)) {
