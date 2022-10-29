@@ -16,7 +16,7 @@ import java.util.List;
 @Slf4j
 @Validated
 @RequiredArgsConstructor
-@RequestMapping(path = "/requests")
+@RequestMapping("/requests")
 public class ItemRequestController {
     private final ItemRequestService itemRequestService;
 
