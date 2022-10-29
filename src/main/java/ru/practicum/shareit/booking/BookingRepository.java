@@ -30,7 +30,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
             "  and b.status = 'APPROVED' " +
             "  and b.start <= ?3 " +
             "  and b.end >= ?2")
-    boolean isAvailableForBooking(Long itemId, LocalDateTime start, LocalDateTime end);
+    boolean isNotAvailableForBooking(Long itemId, LocalDateTime start, LocalDateTime end);
 
     List<Booking> findAllByBookerIdAndItemIdAndStatusAndEndBefore(long bookerId, long itemId, Status status,
                                                                   LocalDateTime end);

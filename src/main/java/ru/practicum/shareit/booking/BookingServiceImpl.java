@@ -137,7 +137,7 @@ public class BookingServiceImpl implements BookingService {
         if (item.getOwner().getId() == userId) {
             throw new AccessDeniedException("Вещь не может быть забронирована её владельцем.");
         }
-        if (!item.getAvailable() || bookingRepository.isAvailableForBooking(bookingDto.getItemId(),
+        if (!item.getAvailable() || bookingRepository.isNotAvailableForBooking(bookingDto.getItemId(),
                 bookingDto.getStart(), bookingDto.getEnd())) {
             throw new WrongParameterException(String.format(
                     "Вещь с ID = %d не доступна для бронирования.", item.getId()));

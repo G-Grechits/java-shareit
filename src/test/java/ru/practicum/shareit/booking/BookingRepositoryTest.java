@@ -72,14 +72,14 @@ class BookingRepositoryTest {
     }
 
     @Test
-    void isAvailableForBooking() {
-        boolean isAvailable1 = bookingRepository.isAvailableForBooking(item.getId(),
+    void isNotAvailableForBooking() {
+        boolean isNotAvailable1 = bookingRepository.isNotAvailableForBooking(item.getId(),
                 LocalDateTime.now().plusDays(1).plusHours(1), LocalDateTime.now().plusDays(2).minusHours(1));
-        boolean isAvailable2 = bookingRepository.isAvailableForBooking(item.getId(), LocalDateTime.now().plusHours(1),
+        boolean isNotAvailable2 = bookingRepository.isNotAvailableForBooking(item.getId(), LocalDateTime.now().plusHours(1),
                 LocalDateTime.now().plusHours(6));
 
-        assertTrue(isAvailable1);
-        assertFalse(isAvailable2);
+        assertTrue(isNotAvailable1);
+        assertFalse(isNotAvailable2);
     }
 
     @Test

@@ -454,8 +454,8 @@ class BookingServiceImplTest {
         User owner = new User(1L, "test user1", "testuser1@mail.com");
         Item item = new Item(1L, "test item", "test description", true, owner, null);
         User booker = new User(2L, "test user2", "testuser2@mail.com");
-        return new Booking(1L, LocalDateTime.parse("2022-10-25T10:00"),
-                LocalDateTime.parse("2022-10-25T20:00"), item, booker, Status.APPROVED);
+        return new Booking(1L, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(2), item, booker,
+                Status.APPROVED);
     }
 
     private BookingDto getBookingDto(Booking booking) {
